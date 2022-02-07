@@ -17,12 +17,26 @@ Parallel Merge Sort Implemented via OpenMP
     - OpemMP task based parallel merge sort (with 6 threads) : 49 s
 
 ### 2. How to Build
-- Use the CMakeLists.  
+- Use the CMakeLists.txt  
     1. mkdir build && cd build  
     2. cmake .. (or cmake .. -G "MinGW Makefiles")  
     3. make  
 
 ### 3. Implementation details
 - Two pass algorithm
-    - Divide   
-    - Combine   
+    - Divide Path 
+        - Recursively divide the current array into two contiguous half-arrays (i.e. left and right) and sort the left and right arrays
+    - Combine Path
+        - Two child-arrays (i.e. left and right) are already sorted
+        - Merge two child-arrays into a sorted array 
+            - Because each child-array is already sorted, just need to compare the first elements of each array, and push the small one into parent-array. Iterate this process until all the elements in child-arrays are pushed into parent-array.
+- Parallel optimization strategy
+    - Divide Path 
+        - Sorting the child-arrays can be executed independently
+        - Two threads take one of the child-arrays and process them parallelly
+    - Combine Path
+        - Combing two arrays into a single array cannot be processed parallelly 
+        - Data parallelism is possible when the task is divided into very fine-grained tasks, but this fine-grained parallelism is somewhat inefficient
+- Perforamnce factor (N-length array)
+    - Work : O(N*logN)
+    - Span : O(logN)
