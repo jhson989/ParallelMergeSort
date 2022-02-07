@@ -1,4 +1,4 @@
-# ParallelScan
+# ParallelMergeSort
 Parallel Merge Sort Implemented via OpenMP
  
 ### 1. Test Environment
@@ -15,6 +15,7 @@ Parallel Merge Sort Implemented via OpenMP
     - std::sort : 169 s
     - Naive sequential merge sort : 179 s
     - OpemMP task based parallel merge sort (with 6 threads) : 49 s
+        - Speed up : 3.4x
 
 ### 2. How to Build
 - Use the CMakeLists.txt  
