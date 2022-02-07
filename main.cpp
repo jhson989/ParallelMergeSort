@@ -11,8 +11,9 @@
 #define DTYPE double
 
 
+const int MAX_DEPTH = 3;
 const int NUM_THREADS = 6;
-const size_t N = ((size_t)1)<<4;
+const size_t N = (((size_t)1)<<27)+1;
 timeval start, end;
 
 
@@ -34,7 +35,7 @@ int main(void) {
     std::cout << "--- The length of sequence is " << N <<"\n";
     std::cout << "--- The total memory size of sequence is " << N*sizeof(DTYPE)/1024.0/1024/1024*3 <<" GB \n";
     std::cout << "************************************************************************\n";
-    srand(time(NULL));
+    srand(1);
 
     std::vector<DTYPE> in(N); 
     std::vector<DTYPE> out(N); 
@@ -47,21 +48,21 @@ int main(void) {
     std::cout << "\nC++ std Sorting Algorithm\n";
     std::copy(in.begin(), in.end(), out.begin());
     gettimeofday(&start, NULL);
-    std::sort(out.begin(), out.end());
+    std::sort(out.begin(), out.end()); // Run the program
     gettimeofday(&end, NULL);
+    std::cout << "--- Total elapsed time : " << GET_SEC(start, end) << " s\n"; // Performance measurmant
+
+
     std::copy(out.begin(), out.end(), gt.begin());
-    std::cout << "--- Total elapsed time : " << GET_SEC(start, end) << " s\n";
-
-
     /*******************************************
      * Sequential Merge Sorting Algorithm
      ********************************************/
     std::cout << "\nSequential Merge Sorting Algorithm\n";
     std::copy(in.begin(), in.end(), out.begin());
     gettimeofday(&start, NULL);
-    merge_sort_sequential(&in, &out, 0, in.size()-1);
+    merge_sort_sequential(&in, &out, 0, in.size()-1); // Run the program
     gettimeofday(&end, NULL);
-    std::cout << "--- Total elapsed time : " << GET_SEC(start, end) << " s\n";
+    std::cout << "--- Total elapsed time : " << GET_SEC(start, end) << " s\n"; // Performance measurmant
     check_result(gt, out);
 
 
@@ -71,9 +72,9 @@ int main(void) {
     std::cout << "\nParallel Merge Sorting Algorithm\n";
     std::copy(in.begin(), in.end(), out.begin());
     gettimeofday(&start, NULL);
-    merge_sort_parallel(&in, &out, 0, in.size()-1);
+    merge_sort_parallel(&in, &out, 0, in.size()-1); // Run the program
     gettimeofday(&end, NULL);
-    std::cout << "--- Total elapsed time : " << GET_SEC(start, end) << " s\n";
+    std::cout << "--- Total elapsed time : " << GET_SEC(start, end) << " s\n"; // Performance measurmant
     check_result(gt, out);
 
 
@@ -84,7 +85,7 @@ int main(void) {
 
 void merge_sort_sequential(std::vector<DTYPE>* in, std::vector<DTYPE>* out, size_t start, size_t end) {
 
-    // Base case
+    /*** Base case ***/
     if (end<=start+1) {
         if ((*in)[end] < (*in)[start]) {
             (*out)[end] = (*in)[start];
@@ -92,45 +93,89 @@ void merge_sort_sequential(std::vector<DTYPE>* in, std::vector<DTYPE>* out, size
         }
         return;
     }
-
-
-    // Divide
+    
+    /*** Divide path ***/
     size_t mid = (start+end)/2;
     merge_sort_sequential(in, out, start, mid);
     merge_sort_sequential(in, out, mid+1, end);
 
-
-    // Conbine
+    /*** Combine path ***/
     size_t flag = start;
     size_t flag_left = start;
     size_t flag_right = mid+1;
-
-    while (flag_left <= mid || flag_right <= end) {
+    while (flag_left <= mid && flag_right <= end) {
         if ((*out)[flag_left] < (*out)[flag_right]) 
             (*in)[flag++] = (*out)[flag_left++];
         else
             (*in)[flag++] = (*out)[flag_right++];
     }
-
+  
     for (size_t i=flag_left; i<=mid; i++)
-        (*in)[flag++] = (*out)[flag_left];
+        (*in)[flag++] = (*out)[i];
 
     for (size_t i=flag_right; i<=end; i++)
-        (*in)[flag++] = (*out)[flag_right];
+        (*in)[flag++] = (*out)[i];
 
     for (size_t i=start; i<=end; i++)
         (*out)[i] = (*in)[i];
 
 }
 
+void merge_sort_parallel_body (std::vector<DTYPE>* in, std::vector<DTYPE>* out, size_t start, size_t end, int depth) {
+    
+    /*** Base case ***/
+    if (end<=start+1) {
+        if ((*in)[end] < (*in)[start]) {
+            (*out)[end] = (*in)[start];
+            (*out)[start] = (*in)[end];
+        }
+        return;
+    }
+    
+    /*** Divide path ***/
+    size_t mid = (start+end)/2;
+    #pragma omp task if (depth<=MAX_DEPTH)
+    {
+        merge_sort_parallel_body(in, out, start, mid, depth+1);
+    }
+    merge_sort_parallel_body(in, out, mid+1, end, depth+1);
+
+    #pragma omp taskwait
+
+    /*** Combine path ***/
+    size_t flag = start;
+    size_t flag_left = start;
+    size_t flag_right = mid+1;
+    while (flag_left <= mid && flag_right <= end) {
+        if ((*out)[flag_left] < (*out)[flag_right]) 
+            (*in)[flag++] = (*out)[flag_left++];
+        else
+            (*in)[flag++] = (*out)[flag_right++];
+    }
+  
+    for (size_t i=flag_left; i<=mid; i++)
+        (*in)[flag++] = (*out)[i];
+
+    for (size_t i=flag_right; i<=end; i++)
+        (*in)[flag++] = (*out)[i];
+
+    for (size_t i=start; i<=end; i++)
+        (*out)[i] = (*in)[i];
+
+
+}
+
+
+// Interface for the parallel algorithm implementation
 void merge_sort_parallel(std::vector<DTYPE>* in, std::vector<DTYPE>* out, size_t start, size_t end) {
 
-
-    // Divide
-
-
-
-    // Conbine
+    #pragma omp parallel num_threads(NUM_THREADS)
+    {
+        #pragma omp single nowait
+        {
+            merge_sort_parallel_body (in, out, start, end, 1);
+        }
+    }
 
 
 }
