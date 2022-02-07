@@ -25,7 +25,7 @@ Parallel Merge Sort Implemented via OpenMP
 ### 3. Implementation details
 - Two pass algorithm
     - Divide Path 
-        - Recursively divide the current array into two contiguous half-arrays (i.e. left and right) and sort the left and right arrays
+        - Recursively divide the current array into two contiguous half-arrays (i.e. left and right) and sort the left and right arrays separately
     - Combine Path
         - Two child-arrays (i.e. left and right) are already sorted
         - Merge two child-arrays into a sorted array 
