@@ -33,7 +33,7 @@ Parallel Merge Sort Implemented via OpenMP
             - Because each child-array is already sorted, just need to compare the first elements of each array, and push the small one into parent-array. Iterate this process until all the elements in child-arrays are pushed into parent-array.
 - Parallel optimization strategy
     - Divide Path 
-        - Sorting the child-arrays can be executed independently
+        -  the child-arrays can be executed independently
         - Two threads take one of the child-arrays and process them parallelly
     - Combine Path
         - Combing two arrays into a single array cannot be processed parallelly 
